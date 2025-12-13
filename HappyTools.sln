@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35806.99
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HappyTools", "HappyTools.csproj", "{A77AB1AA-6A5E-DD86-AB2C-252DBAEC551F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Happy.Api", "..\Happy.Api\Happy.Api.csproj", "{04CFA31A-CFA4-4429-B538-22BDEDEEF813}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A77AB1AA-6A5E-DD86-AB2C-252DBAEC551F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A77AB1AA-6A5E-DD86-AB2C-252DBAEC551F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A77AB1AA-6A5E-DD86-AB2C-252DBAEC551F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A77AB1AA-6A5E-DD86-AB2C-252DBAEC551F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04CFA31A-CFA4-4429-B538-22BDEDEEF813}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04CFA31A-CFA4-4429-B538-22BDEDEEF813}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04CFA31A-CFA4-4429-B538-22BDEDEEF813}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04CFA31A-CFA4-4429-B538-22BDEDEEF813}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B3238B83-5F82-4D48-A360-E96D10A87B12}
+	EndGlobalSection
+EndGlobal

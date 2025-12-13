@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\..\common.props" Condition="Exists('..\..\common.props')" />
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UserSecretsId>cd5f7512-8e38-41dc-9394-917b0feedb04</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="ContractServices\**" />
+		<Compile Remove="Extension\**" />
+		<Compile Remove="Interfaces\**" />
+		<Compile Remove="Notification\KaveNeagr\**" />
+		<EmbeddedResource Remove="ContractServices\**" />
+		<EmbeddedResource Remove="Extension\**" />
+		<EmbeddedResource Remove="Interfaces\**" />
+		<EmbeddedResource Remove="Notification\KaveNeagr\**" />
+		<None Remove="ContractServices\**" />
+		<None Remove="Extension\**" />
+		<None Remove="Interfaces\**" />
+		<None Remove="Notification\KaveNeagr\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.4" />
+		<PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.9.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
+		<PackageReference Include="Kavenegar" Version="1.2.5" />
+		<PackageReference Include="Microsoft.AspNet.Identity.Core" Version="2.2.4" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.11" />
+		<PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="10.0.1" />
+		<PackageReference Include="NewId" Version="4.0.1" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+		<PackageReference Include="Refit" Version="8.0.0" />
+		<PackageReference Include="Refit.HttpClientFactory" Version="8.0.0" />
+		<PackageReference Include="Serilog" Version="4.2.0" />
+		<PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+		<PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.6" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Utilities\Pagination\" />
+	</ItemGroup>
+
+</Project>
