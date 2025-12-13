@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HappyTools")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ef1b9dd8c99b66fede1ef024429a1a373b3fc1a0")]
 [assembly: System.Reflection.AssemblyProductAttribute("HappyTools")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HappyTools")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
