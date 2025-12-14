@@ -29,7 +29,7 @@ namespace HappyTools.Application
             _dbContext = dbContext;
         }
 
-        public async Task<TReturnDto> CreateAsync(TCreateDto input)
+        public virtual async  Task<TReturnDto> CreateAsync(TCreateDto input)
         {
             var entity = await MapCreateDtoToEntityAsync(input);
 
@@ -44,7 +44,7 @@ namespace HappyTools.Application
             return result;
         }
 
-        public async Task<TReturnDto> UpdateAsync(TKey id, TUpdateDto input)
+        public virtual async Task<TReturnDto> UpdateAsync(TKey id, TUpdateDto input)
         {
             if (id is null)
                 throw new ArgumentNullException(nameof(id));
@@ -71,7 +71,7 @@ namespace HappyTools.Application
 
 
         // Soft delete
-        public async Task<TReturnDto> SoftDeleteAsync(TKey id)
+        public virtual async Task<TReturnDto> SoftDeleteAsync(TKey id)
         {
             if (id is null)
                 throw new ArgumentNullException(nameof(id));
@@ -95,7 +95,7 @@ namespace HappyTools.Application
         }
 
         // Hard delete
-        public async Task<TReturnDto> HardDeleteAsync(TKey id)
+        public virtual async Task<TReturnDto> HardDeleteAsync(TKey id)
         {
             if (id is null)
                 throw new ArgumentNullException(nameof(id));
