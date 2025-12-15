@@ -318,7 +318,7 @@ namespace HappyTools.Application
             return await Task.Run(() =>
             {
                 var mappedEntity = Activator.CreateInstance<TEntity>();
-                mappedEntity.CopyPropertiesFrom(createDto);
+                createDto.CopyPropertiesTo(mappedEntity);
                 return mappedEntity;
             });
         }
@@ -344,7 +344,7 @@ namespace HappyTools.Application
         {
             return await Task.Run(() =>
             {
-                entity.CopyPropertiesFrom(updateDto);
+                updateDto.CopyPropertiesTo(entity);
                 return entity;
             });
         }
