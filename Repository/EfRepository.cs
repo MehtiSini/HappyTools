@@ -1,0 +1,116 @@
+﻿using HappyTools.Domain.Entities.Audit.Abstractions;
+using HappyTools.Shared;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+
+namespace HappyTools.Repository
+{
+    public class EfRepository<TDbContext, TEntity, TKey>
+       : IRepository<TEntity, TKey>
+       where TDbContext : DbContext
+       where TEntity : class, IEntity<TKey>
+    {
+        protected readonly TDbContext _context;
+        protected readonly DbSet<TEntity> _set;
+
+        public EfRepository(TDbContext context)
+        {
+            _context = context;
+            _set = context.Set<TEntity>();
+        }
+
+        public virtual async Task<TKey> InsertAsync(TEntity entity)
+        {
+            await _set.AddAsync(entity);
+            await _context.SaveChangesAsync();
+            return entity.Id;
+        }
+
+        public virtual async Task<TKey> UpdateAsync(TEntity entity)
+        {
+            _set.Update(entity);
+            await _context.SaveChangesAsync();
+            return entity.Id;
+        }
+
+        public virtual async Task<TKey> DeleteAsync(TKey id)
+        {
+            var entity = await _set.FirstOrDefaultAsync(x => x.Id!.Equals(id));
+            if (entity == null)
+                throw new KeyNotFoundException();
+
+            _set.Remove(entity);
+            await _context.SaveChangesAsync();
+            return id;
+        }
+
+        public virtual async Task<IReadOnlyList<TKey>> GetListAsync()
+        {
+            return await _set
+                .AsNoTracking()
+                .Select(x => x.Id)
+                .ToListAsync();
+        }
+
+    
+    }
+
+    public class EfRepository<TDbContext, TEntity, TKey, TFilterModel>
+        : IRepository<TEntity, TKey, TFilterModel>
+        where TDbContext : DbContext
+        where TEntity : class, IEntity<TKey>
+        where TFilterModel : BaseFilterModel
+    {
+        protected readonly TDbContext _context;
+        protected readonly DbSet<TEntity> _set;
+
+        public EfRepository(TDbContext context)
+        {
+            _context = context;
+            _set = context.Set<TEntity>();
+        }
+
+        public virtual async Task<TKey> InsertAsync(TEntity entity)
+        {
+            await _set.AddAsync(entity);
+            await _context.SaveChangesAsync();
+            return entity.Id;
+        }
+
+        public virtual async Task<TKey> UpdateAsync(TEntity entity)
+        {
+            _set.Update(entity);
+            await _context.SaveChangesAsync();
+            return entity.Id;
+        }
+
+        public virtual async Task<TKey> DeleteAsync(TKey id)
+        {
+            var entity = await _set.FirstOrDefaultAsync(x => x.Id!.Equals(id));
+            if (entity == null)
+                throw new KeyNotFoundException();
+
+            _set.Remove(entity);
+            await _context.SaveChangesAsync();
+            return id;
+        }
+
+        public virtual async Task<IReadOnlyList<TKey>> GetListAsync()
+        {
+            return await _set
+                .AsNoTracking()
+                .Select(x => x.Id)
+                .ToListAsync();
+        }
+
+        public virtual async Task<IReadOnlyList<TKey>> GetFilteredListAsync(TFilterModel filterModel)
+        {
+            IQueryable<TEntity> query = _set.AsNoTracking();
+
+
+            return await query
+                .Select(x => x.Id)
+                .ToListAsync();
+        }
+    }
+}
