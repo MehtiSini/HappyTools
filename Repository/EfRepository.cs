@@ -1,5 +1,6 @@
 ﻿using HappyTools.Domain.Entities.Audit.Abstractions;
 using HappyTools.Shared;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -52,7 +53,10 @@ namespace HappyTools.Repository
                 .ToListAsync();
         }
 
-    
+        public virtual async Task<IQueryable<TEntity>> GetQueryableAsync()
+        {
+            return await Task.FromResult(_set.AsNoTracking().AsQueryable());
+        }
     }
 
     public class EfRepository<TDbContext, TEntity, TKey, TFilterModel>
@@ -70,18 +74,18 @@ namespace HappyTools.Repository
             _set = context.Set<TEntity>();
         }
 
-        public virtual async Task<TKey> InsertAsync(TEntity entity)
+        public virtual async Task<TEntity> InsertAsync(TEntity entity)
         {
             await _set.AddAsync(entity);
             await _context.SaveChangesAsync();
-            return entity.Id;
+            return entity;
         }
 
-        public virtual async Task<TKey> UpdateAsync(TEntity entity)
+        public virtual async Task<TEntity> UpdateAsync(TEntity entity)
         {
             _set.Update(entity);
             await _context.SaveChangesAsync();
-            return entity.Id;
+            return entity;
         }
 
         public virtual async Task<TKey> DeleteAsync(TKey id)
@@ -112,5 +116,34 @@ namespace HappyTools.Repository
                 .Select(x => x.Id)
                 .ToListAsync();
         }
+
+        public virtual async Task<IQueryable<TEntity>> GetQueryableAsync()
+        {
+            return await Task.FromResult(_set.AsNoTracking().AsQueryable());
+        }
+
+        public virtual async  Task<IQueryable<TEntity>> GetFilteredQueryAsync(TFilterModel filterModel)
+        {
+            return await GetQueryableAsync();
+        }
+
+        public virtual async Task InsertManyAsync(List<TEntity> entities)
+        {
+            foreach (var entity in entities)
+            {
+                await InsertAsync(entity);
+            }
+
+        }
+
+        public virtual async Task UpdateManyAsync(List<TEntity> entities)
+        {
+            foreach (var entity in entities)
+            {
+                await UpdateAsync(entity);
+            }
+
+        }
+
     }
 }

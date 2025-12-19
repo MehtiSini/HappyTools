@@ -16,8 +16,8 @@ namespace HappyTools.Repository
         where TEntity : IEntity<TKey>
        where TFilterModel : BaseFilterModel
     {
-        Task<TKey> InsertAsync(TEntity entity);
-        Task<TKey> UpdateAsync(TEntity entity);
+        Task<TEntity> InsertAsync(TEntity entity);
+        Task<TEntity> UpdateAsync(TEntity entity);
         Task<TKey> DeleteAsync(TKey id);
         Task<IReadOnlyList<TKey>> GetListAsync();
         Task<IReadOnlyList<TKey>> GetFilteredListAsync(TFilterModel filterModel);

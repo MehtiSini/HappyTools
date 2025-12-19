@@ -20,7 +20,7 @@ namespace HappyTools.Shared
         public bool ExcludePagination { get; set; } = false;
 
         [JsonIgnore]
-        public bool EnableFilter { get; set; } = true;
+        public bool IsEnable { get; set; } = true;
     }
     public class PagedAndSortedFilterModel
     {
