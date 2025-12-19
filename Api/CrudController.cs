@@ -13,12 +13,12 @@ namespace HappyTools.Api
 {
     [ApiController]
     [Route("api/app")]
-    public abstract class CrudController<TAppService, TEntityListDto, TEntitySingleDto, TKey, TPagedAndSortedResultRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto> : ControllerBase
-         where TAppService : ICrudService<TEntityListDto, TEntitySingleDto, TKey, TPagedAndSortedResultRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto>
+    public abstract class CrudController<TAppService, TEntityListDto, TEntitySingleDto, TKey, TPageAndSortRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto> : ControllerBase
+         where TAppService : ICrudService<TEntityListDto, TEntitySingleDto, TKey, TPageAndSortRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto>
          where TEntityListDto : EntityDto<TKey>, new()
          where TEntitySingleDto : EntityDto<TKey>, new()
          where TFilterModel : BaseFilterModel
-         where TPagedAndSortedResultRequestDto : PageAndSortRequestDto
+         where TPageAndSortRequestDto : PageAndSortRequestDto
          where TReturnDto : CrudResponseDto<TKey>
     {
         private readonly TAppService _appService;
@@ -62,7 +62,7 @@ namespace HappyTools.Api
         [HttpPost]
         [Route("admin/[controller]/filter")]
         [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
-        public async virtual Task<PagedResultDto<TEntityListDto>> GetFilteredList([FromQuery] TPagedAndSortedResultRequestDto input, [FromBody] TFilterModel filterModel)
+        public async virtual Task<PagedResultDto<TEntityListDto>> GetFilteredList([FromQuery] TPageAndSortRequestDto input, [FromBody] TFilterModel filterModel)
         {
 
             var filteredPagedResult = await _appService.GetFilteredPagedListAsync(input, filterModel);

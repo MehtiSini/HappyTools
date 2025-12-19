@@ -11,14 +11,14 @@ using Microsoft.EntityFrameworkCore;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 namespace HappyTools.Application
 {
-    public class EfCrudService<TDbContext, TEntity, TEntityListDto, TEntitySingleDto, TKey, TPagedAndSortedResultRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto> :
-          ICrudService<TEntityListDto, TEntitySingleDto, TKey, TPagedAndSortedResultRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto>
+    public class EfCrudService<TDbContext, TEntity, TEntityListDto, TEntitySingleDto, TKey, TPageAndSortRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto> :
+          ICrudService<TEntityListDto, TEntitySingleDto, TKey, TPageAndSortRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto>
           where TEntity : class, IEntity<TKey>, IHasConcurrencyStamp, IHasCreationTime, ICreationAuditedObject
           where TDbContext : DbContext
           where TEntityListDto : EntityDto<TKey>, new()
           where TEntitySingleDto : EntityDto<TKey>, new()
           where TFilterModel : BaseFilterModel
-          where TPagedAndSortedResultRequestDto : PageAndSortRequestDto
+          where TPageAndSortRequestDto : PageAndSortRequestDto
           where TReturnDto : CrudResponseDto<TKey>, new()
 
     {
@@ -125,7 +125,7 @@ namespace HappyTools.Application
         }
 
 
-        public virtual async Task<PagedResultDto<TEntityListDto>> GetFilteredPagedListAsync(TPagedAndSortedResultRequestDto input, TFilterModel filterModel)
+        public virtual async Task<PagedResultDto<TEntityListDto>> GetFilteredPagedListAsync(TPageAndSortRequestDto input, TFilterModel filterModel)
         {
             var query = _dbContext.Set<TEntity>()
                 .AsNoTracking()
