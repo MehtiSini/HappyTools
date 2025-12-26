@@ -21,6 +21,7 @@ namespace HappyTools.Shared
 
         [JsonIgnore]
         public bool IsEnable { get; set; } = true;
+
     }
     public class PagedAndSortedFilterModel
     {

@@ -1,4 +1,6 @@
-﻿using HappyTools.Domain.Entities.MultiTenant;
+﻿using HappyTools.CrossCutting.Data;
+using HappyTools.Domain.Entities.MultiTenant;
+using HappyTools.Domain.Entities.SoftDelete;
 using HappyTools.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -10,14 +12,13 @@ namespace HappyTools.EfCore.Context
     {
         private readonly ICurrentTenant _currentTenant;
 
-        protected virtual bool IsMultiTenantFilterEnabled => true;
-
-        public MultiTenantDbContext(DbContextOptions options, ICurrentTenant currentTenant)
-            : base(options)
+        public MultiTenantDbContext(DbContextOptions options, IDataFilter<ISoftDelete> softDeleteFilter) : base(options, softDeleteFilter)
         {
-            _currentTenant = currentTenant;
         }
 
+        protected virtual bool IsMultiTenantFilterEnabled => true;
+
+      
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

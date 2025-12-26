@@ -8,5 +8,15 @@ namespace HappyTools.Contract.Dtos
 {
     public class CrudSimpleReponseDto<TKey> :CrudResponseDto<TKey>
     {
+        public CrudSimpleReponseDto(TKey id)
+        {
+            Id = id;
+        }
+
+        public CrudSimpleReponseDto()
+        {
+            
+        }
+
     }
 }

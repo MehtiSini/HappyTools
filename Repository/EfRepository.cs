@@ -57,6 +57,16 @@ namespace HappyTools.Repository
         {
             return await Task.FromResult(_set.AsNoTracking().AsQueryable());
         }
+
+        public async Task DeleteAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            var entity = await _set.FirstOrDefaultAsync(predicate);
+            if (entity == null)
+                throw new KeyNotFoundException();
+
+            _set.Remove(entity);
+            await _context.SaveChangesAsync();
+        }
     }
 
     public class EfRepository<TDbContext, TEntity, TKey, TFilterModel>
@@ -122,10 +132,12 @@ namespace HappyTools.Repository
             return await Task.FromResult(_set.AsNoTracking().AsQueryable());
         }
 
-        public virtual async  Task<IQueryable<TEntity>> GetFilteredQueryAsync(TFilterModel filterModel)
+        public virtual async Task<IQueryable<TEntity>> GetFilteredQueryAsync(TFilterModel filterModel)
         {
             return await GetQueryableAsync();
         }
+
+
 
         public virtual async Task InsertManyAsync(List<TEntity> entities)
         {
@@ -145,5 +157,14 @@ namespace HappyTools.Repository
 
         }
 
+        public async Task DeleteAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            var entity = await _set.FirstOrDefaultAsync(predicate);
+            if (entity == null)
+                throw new KeyNotFoundException();
+
+            _set.Remove(entity);
+            await _context.SaveChangesAsync();
+        }
     }
 }

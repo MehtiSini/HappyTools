@@ -1,41 +1,55 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
 using HappyTools.Contract.Dtos;
 using HappyTools.Contract.Interfaces;
+using HappyTools.CrossCutting.Data;
+using HappyTools.CrossCutting.Event;
 using HappyTools.DependencyInjection.Contracts;
 using HappyTools.Domain.Entities.Audit.Abstractions;
 using HappyTools.Domain.Entities.Concurrency;
 using HappyTools.Domain.Entities.SoftDelete;
 using HappyTools.Shared;
+using HappyTools.Shared.Identity;
+using HappyTools.Shared.MultiTenancy;
 using HappyTools.Utilities.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 namespace HappyTools.Application
 {
     public class EfCrudService<TDbContext, TEntity, TEntityListDto, TEntitySingleDto, TKey, TPageAndSortRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto> :
-          ICrudService<TEntityListDto, TEntitySingleDto, TKey, TPageAndSortRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto>
-          where TEntity : class, IEntity<TKey>, IHasConcurrencyStamp, IHasCreationTime, ICreationAuditedObject
-          where TDbContext : DbContext
-          where TEntityListDto : EntityDto<TKey>, new()
-          where TEntitySingleDto : EntityDto<TKey>, new()
-          where TFilterModel : BaseFilterModel
-          where TPageAndSortRequestDto : PageAndSortRequestDto
-          where TReturnDto : CrudResponseDto<TKey>, new()
-
+       ICrudService<TEntityListDto, TEntitySingleDto, TKey, TPageAndSortRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto>
+       where TEntity : class, IEntity<TKey>, IHasConcurrencyStamp, IHasCreationTime, ICreationAuditedObject
+       where TDbContext : DbContext
+       where TEntityListDto : EntityDto<TKey>, new()
+       where TEntitySingleDto : EntityDto<TKey>, new()
+       where TFilterModel : BaseFilterModel
+       where TPageAndSortRequestDto : PageAndSortRequestDto
+       where TReturnDto : CrudResponseDto<TKey>, new()
     {
-        private readonly TDbContext _dbContext;
+        private readonly IServiceProvider _provider;
 
-        public EfCrudService(TDbContext dbContext)
+        protected TDbContext DbContext => _provider.GetRequiredService<TDbContext>();
+        protected DbSet<TEntity> DbSet => DbContext.Set<TEntity>();
+        protected IDataFilter<ISoftDelete> DataFilter => _provider.GetRequiredService<IDataFilter<ISoftDelete>>();
+        protected ICurrentTenant CurrentTenant => _provider.GetRequiredService<ICurrentTenant>();
+        protected ICurrentUser CurrentUser => _provider.GetRequiredService<ICurrentUser>();
+        protected ILocalEventBus LocalEventBus => _provider.GetRequiredService<ILocalEventBus>();
+
+        public EfCrudService(IServiceProvider provider)
         {
-            _dbContext = dbContext;
+            _provider = provider;
         }
 
-        public virtual async  Task<TReturnDto> CreateAsync(TCreateDto input)
-        {
-            var entity = await MapCreateDtoToEntityAsync(input);
 
-            await _dbContext.Set<TEntity>()
+        public virtual async Task<TReturnDto> CreateAsync(TCreateDto input)
+        {
+            var entity = MapCreateDtoToEntity(input);
+
+            await DbContext.Set<TEntity>()
                 .AddAsync(entity);
-            await _dbContext.SaveChangesAsync();
+            await DbContext.SaveChangesAsync();
 
             var result = new TReturnDto
             {
@@ -49,19 +63,19 @@ namespace HappyTools.Application
             if (id is null)
                 throw new ArgumentNullException(nameof(id));
 
-            var entity = await _dbContext.Set<TEntity>()
+            var entity = await DbContext.Set<TEntity>()
                 .FirstOrDefaultAsync(e => e.Id!.Equals(id));
 
             if (entity == null)
                 throw new ValidationException($"No entity {typeof(TEntity).Name} with Id ==> {id}");
 
-            var mappedEntity = await MapUpdateDtoToEntityAsync(entity, input);
+            var mappedEntity = MapUpdateDtoToEntity(entity, input);
 
             mappedEntity.ConcurrencyStamp = entity.ConcurrencyStamp;
 
-            _dbContext.Set<TEntity>()
+            DbContext.Set<TEntity>()
                 .Update(mappedEntity);
-            await _dbContext.SaveChangesAsync();
+            await DbContext.SaveChangesAsync();
 
             return new TReturnDto
             {
@@ -76,58 +90,56 @@ namespace HappyTools.Application
             if (id is null)
                 throw new ArgumentNullException(nameof(id));
 
-            var entity = await _dbContext.Set<TEntity>()
+            var entity = await DbContext.Set<TEntity>()
                 .FirstOrDefaultAsync(e => e.Id!.Equals(id));
 
             if (entity == null)
                 throw new ValidationException($"No entity {typeof(TEntity).Name} with Id ==> {id}");
 
-            if (entity is ISoftDelete softDeleteEntity)
-            {
-                softDeleteEntity.IsDeleted = true;
-                _dbContext.Set<TEntity>().Update(entity);
-                await _dbContext.SaveChangesAsync();
+            DbContext.Set<TEntity>().Remove(entity);
+            await DbContext.SaveChangesAsync();
 
-                return new TReturnDto { Id = entity.Id };
-            }
-
-            throw new InvalidOperationException($"Entity {typeof(TEntity).Name} does not support soft delete.");
+            return new TReturnDto { Id = entity.Id };
         }
-
         // Hard delete
         public virtual async Task<TReturnDto> HardDeleteAsync(TKey id)
         {
             if (id is null)
                 throw new ArgumentNullException(nameof(id));
 
-            var entity = await _dbContext.Set<TEntity>()
+            var entity = await DbContext.Set<TEntity>()
                 .FirstOrDefaultAsync(e => e.Id!.Equals(id));
 
             if (entity == null)
                 throw new ValidationException($"No entity {typeof(TEntity).Name} with Id ==> {id}");
 
-            _dbContext.Set<TEntity>().Remove(entity);
-            await _dbContext.SaveChangesAsync();
+            // Disable SoftDeleteInterceptor temporarily
+            using (DataFilter.Disable())
+            {
+                DbContext.Set<TEntity>().Remove(entity);
+                await DbContext.SaveChangesAsync();
+            }
 
             return new TReturnDto { Id = entity.Id };
         }
 
 
 
+
         public virtual async Task<List<TEntityListDto>> GetFilteredListAsync(TFilterModel filterModel)
         {
-            var entities = await _dbContext.Set<TEntity>()
+            var entities = await DbSet
                    .AsNoTracking()
                    .ToListAsync();
 
-            return await MapEntitiesToDtosAsync(entities);
+            return MapEntitiesToDtos(entities);
 
         }
 
 
         public virtual async Task<PagedResultDto<TEntityListDto>> GetFilteredPagedListAsync(TPageAndSortRequestDto input, TFilterModel filterModel)
         {
-            var query = _dbContext.Set<TEntity>()
+            var query = DbSet
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -135,11 +147,11 @@ namespace HappyTools.Application
 
             var totalCount = await query.LongCountAsync();
 
-            var entities = await _dbContext.Set<TEntity>()
+            var entities = await DbContext.Set<TEntity>()
                  .AsNoTracking()
                  .ToListAsync();
 
-            var results = await MapEntitiesToDtosAsync(entities);
+            var results = MapEntitiesToDtos(entities);
 
             return new PagedResultDto<TEntityListDto>(
         allCount: entities.Count,
@@ -148,17 +160,152 @@ namespace HappyTools.Application
     );
         }
 
-
-        public async Task<TEntitySingleDto> GetAsync(TKey id)
+        public virtual IQueryable<TEntity> CreateFilteredQuery(TFilterModel filterModel, bool asNoTracking = false)
         {
-            var targetEntity = await _dbContext.Set<TEntity>()
-.Where(t => t.Id.Equals(id))
-.FirstOrDefaultAsync();
+            return DbContext.Set<TEntity>()
+                 .AsNoTracking()
+                 //ApplyFilteres
+                 .AsQueryable();
+        }
 
-            if (targetEntity is null)
+        public virtual async Task<IQueryable<TEntity>> CreateFilteredQueryAsync(TFilterModel filterModel, bool asNoTracking = false)
+        {
+            return DbContext.Set<TEntity>()
+                 .AsNoTracking()
+                 //ApplyFilteres
+                 .AsQueryable();
+        }
+
+        public static IQueryable<TEntity> ApplyPagedQuery<TEntity>(
+    IQueryable<TEntity> query,
+  PageAndSortRequestDto input)
+            where TEntity : ICreationAuditedObject
+        {
+            if (input.SkipCount > 0)
+                query = query.Skip(input.SkipCount);
+            if (input.MaxResultCount > 0)
+                query = query.Take(input.MaxResultCount);
+            query = query.OrderByDescending(e => e.CreationTime);
+
+            return query;
+        }
+
+
+        public virtual IQueryable<TEntityListDto> ProjectToListDto(
+           IQueryable<TEntity> query)
+        {
+            return query.SelectInto(e => new TEntityListDto
+            {
+                // mapping
+            });
+        }
+
+        public virtual async Task<TEntitySingleDto> ProjectToSingleDtoAsync(
+            IQueryable<TEntity> query)
+        {
+            return await query.SelectInto(e => new TEntitySingleDto
+            {
+                // mapping
+            }).FirstOrDefaultAsync();
+        }
+
+
+        public virtual async Task<TEntitySingleDto> GetAsync(TKey id)
+        {
+            var targetQuery = DbSet
+.Where(t => t.Id.Equals(id));
+
+            var entity = await ProjectToSingleDtoAsync(targetQuery);
+
+            if (entity is null)
                 throw new ValidationException($"There Is No {typeof(TEntity).Name} With Id = {id}");
 
-            return await MapToGetOutputDtoAsync(targetEntity);
+            return entity;
+        }
+        public virtual async Task<TEntity> GetEntityAsync(TKey id)
+        {
+            return await DbSet
+.Where(t => t.Id.Equals(id))
+.FirstOrDefaultAsync();
+        }
+
+
+        public virtual async Task<List<TEntity>> GetEntitiesAsync()
+        {
+           return await DbSet.
+                AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task InsertAsync(TEntity entity, bool autoSave = true)
+        {
+            DbSet.Add(entity);
+            if (autoSave)
+                await SaveChangesAsync();
+        }
+
+        public async Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = true)
+        {
+            DbSet.AddRange(entities);
+            if (autoSave)
+                await SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(TEntity entity, bool autoSave = true)
+        {
+            DbSet.Update(entity);
+
+            if (autoSave)
+                await SaveChangesAsync();
+
+        }
+        public async Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = true)
+        {
+            DbSet.UpdateRange(entities);
+            if (autoSave)
+                await SaveChangesAsync();
+
+        }
+
+        public async Task DeleteAsync(Expression<Func<TEntity, bool>> predicate, bool autoSave = true)
+        {
+            var entities = await DbContext.Set<TEntity>()
+      .Where(predicate)
+      .ToListAsync();
+
+            if (entities == null)
+                throw new KeyNotFoundException();
+
+            DbSet.RemoveRange(entities);
+            await SaveChangesAsync();
+        }
+        public Task SaveChangesAsync()
+        {
+            return DbContext.SaveChangesAsync();
+        }
+
+        public Task DeleteAsync(TKey id)
+        {
+            var entity = Activator.CreateInstance<TEntity>();
+            typeof(TEntity).GetProperty("Id")!.SetValue(entity, id);
+
+            DbSet.Attach(entity);
+            DbSet.Remove(entity);
+
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteManyAsync(IEnumerable<TKey> ids)
+        {
+            foreach (var id in ids)
+            {
+                var entity = Activator.CreateInstance<TEntity>();
+                typeof(TEntity).GetProperty("Id")!.SetValue(entity, id);
+                DbSet.Attach(entity);
+                DbSet.Remove(entity);
+            }
+
+            return Task.CompletedTask;
         }
 
         //Mappings
@@ -166,289 +313,125 @@ namespace HappyTools.Application
         public virtual List<TEntity> MapCreateDtosToEntities(List<TCreateDto> createDtos)
         {
             var mappedEntities = new List<TEntity>();
-
-            createDtos.ForEach(createDto =>
+            foreach (var createDto in createDtos)
             {
                 var mappedEntity = Activator.CreateInstance<TEntity>();
-                createDto.CopyPropertiesFrom(mappedEntity);
+                createDto.CopyPropertiesTo(mappedEntity);
                 mappedEntities.Add(mappedEntity);
-            });
-
+            }
             return mappedEntities;
         }
 
         public virtual TEntity MapCreateDtoToEntity(TCreateDto createDto)
         {
             var mappedEntity = Activator.CreateInstance<TEntity>();
-            mappedEntity.CopyPropertiesFrom(createDto);
-
+            createDto.CopyPropertiesTo(mappedEntity);
             return mappedEntity;
         }
 
-
-        public virtual List<TEntity> MapUpdateDtosToEntities(List<TCreateDto> createDtos)
+        // UpdateDtos → Entities
+        public virtual List<TEntity> MapUpdateDtosToEntities(List<TUpdateDto> updateDtos)
         {
             var mappedEntities = new List<TEntity>();
-
-            createDtos.ForEach(createDto =>
+            foreach (var updateDto in updateDtos)
             {
                 var mappedEntity = Activator.CreateInstance<TEntity>();
-                createDto.CopyPropertiesFrom(mappedEntity);
+                updateDto.CopyPropertiesTo(mappedEntity);
                 mappedEntities.Add(mappedEntity);
-            });
-
+            }
             return mappedEntities;
         }
 
-        public virtual TEntity MapUpdateDtoToEntity(TUpdateDto createDto)
+        public virtual TEntity MapUpdateDtoToEntity(TEntity entity, TUpdateDto updateDto)
         {
             var mappedEntity = Activator.CreateInstance<TEntity>();
-            mappedEntity.CopyPropertiesFrom(createDto);
-
+            updateDto.CopyPropertiesTo(entity);
             return mappedEntity;
         }
 
-        public virtual TEntitySingleDto MapEntityToDto(TEntity createDto)
+        // Entity → Single DTO
+        public virtual TEntitySingleDto MapEntityToDto(TEntity entity)
         {
-            var mappedEntity = Activator.CreateInstance<TEntitySingleDto>();
-            mappedEntity.CopyPropertiesFrom(createDto);
-
-            return mappedEntity;
+            var mappedDto = Activator.CreateInstance<TEntitySingleDto>();
+            entity.CopyPropertiesTo(mappedDto);
+            return mappedDto;
         }
 
+        // Entities → List DTOs
         public virtual List<TEntityListDto> MapEntitiesToDtos(List<TEntity> entities)
         {
             var mappedDtos = new List<TEntityListDto>();
-
-            entities.ForEach(createDto =>
+            foreach (var entity in entities)
             {
                 var mappedDto = Activator.CreateInstance<TEntityListDto>();
-                createDto.CopyPropertiesFrom(mappedDto);
+                entity.CopyPropertiesTo(mappedDto);
                 mappedDtos.Add(mappedDto);
-            });
-
+            }
             return mappedDtos;
         }
 
-        public virtual TCreateDto MapEntityToCreateDto(TEntity createDto)
+        // Entity → Create DTO
+        public virtual TCreateDto MapEntityToCreateDto(TEntity entity)
         {
-            var mappedEntity = Activator.CreateInstance<TCreateDto>();
-            mappedEntity.CopyPropertiesFrom(createDto);
-
-            return mappedEntity;
+            var mappedDto = Activator.CreateInstance<TCreateDto>();
+            entity.CopyPropertiesTo(mappedDto);
+            return mappedDto;
         }
 
+        // Entities → List of Create DTOs
         public virtual List<TCreateDto> MapEntitiesToCreateDtos(List<TEntity> entities)
         {
             var mappedDtos = new List<TCreateDto>();
-
-            entities.ForEach(createDto =>
+            foreach (var entity in entities)
             {
                 var mappedDto = Activator.CreateInstance<TCreateDto>();
-                createDto.CopyPropertiesFrom(mappedDto);
+                entity.CopyPropertiesTo(mappedDto);
                 mappedDtos.Add(mappedDto);
-            });
-
+            }
             return mappedDtos;
         }
 
-        public virtual TUpdateDto MapEntityToUpdateDto(TEntity createDto)
+        // Entity → Update DTO
+        public virtual TUpdateDto MapEntityToUpdateDto(TEntity entity)
         {
-            var mappedEntity = Activator.CreateInstance<TUpdateDto>();
-            mappedEntity.CopyPropertiesFrom(createDto);
-
-            return mappedEntity;
+            var mappedDto = Activator.CreateInstance<TUpdateDto>();
+            entity.CopyPropertiesTo(mappedDto);
+            return mappedDto;
         }
 
+        // Entities → List of Update DTOs
         public virtual List<TUpdateDto> MapEntitiesToUpdateDtos(List<TEntity> entities)
         {
             var mappedDtos = new List<TUpdateDto>();
-
-            entities.ForEach(createDto =>
+            foreach (var entity in entities)
             {
                 var mappedDto = Activator.CreateInstance<TUpdateDto>();
-                createDto.CopyPropertiesFrom(mappedDto);
+                entity.CopyPropertiesTo(mappedDto);
                 mappedDtos.Add(mappedDto);
-            });
-
+            }
             return mappedDtos;
         }
 
-
-        public async virtual Task<List<TEntity>> MapCreateDtosToEntitiesAsync(List<TCreateDto> createDtos)
+        public virtual List<T1> MapTo<T1, T2>(List<T2> sourceList)
+            where T1 : class, new()
         {
-            var mappedEntities = new List<TEntity>();
-
-            await Task.Run(() =>
+            var mappedList = new List<T1>();
+            foreach (var item in sourceList)
             {
-                createDtos.ForEach(createDto =>
-                {
-                    var mappedEntity = Activator.CreateInstance<TEntity>();
-                    mappedEntity.CopyPropertiesFrom(createDto);
-                    mappedEntities.Add(mappedEntity);
-                });
-            });
-
-            return mappedEntities;
+                var mappedItem = new T1();
+                item.CopyPropertiesTo(mappedItem);
+                mappedList.Add(mappedItem);
+            }
+            return mappedList;
         }
 
-
-        public async virtual Task<List<T1>> MapToAsync<T1, T2>(List<T2> createDtos)
-          where T1 : class, new()
+        protected virtual TEntitySingleDto MapToGetOutputDto(TEntity entity)
         {
-            var mappedEntities = new List<T1>();
-
-            await Task.Run(() =>
-            {
-                createDtos.ForEach(createDto =>
-                {
-                    var mappedEntity = new T1();
-                    mappedEntity.CopyPropertiesFrom(createDto);
-                    mappedEntities.Add(mappedEntity);
-                });
-            });
-
-            return mappedEntities;
+            var mappedDto = Activator.CreateInstance<TEntitySingleDto>();
+            entity.CopyPropertiesFrom(mappedDto);
+            return mappedDto;
         }
 
-
-
-        public virtual async Task<TEntity> MapCreateDtoToEntityAsync(TCreateDto createDto)
-        {
-            return await Task.Run(() =>
-            {
-                var mappedEntity = Activator.CreateInstance<TEntity>();
-                createDto.CopyPropertiesTo(mappedEntity);
-                return mappedEntity;
-            });
-        }
-
-        public virtual async Task<List<TEntity>> MapUpdateDtosToEntitiesAsync(List<TCreateDto> createDtos)
-        {
-            var mappedEntities = new List<TEntity>();
-
-            await Task.Run(() =>
-            {
-                createDtos.ForEach(createDto =>
-                {
-                    var mappedEntity = Activator.CreateInstance<TEntity>();
-                    createDto.CopyPropertiesFrom(mappedEntity);
-                    mappedEntities.Add(mappedEntity);
-                });
-            });
-
-            return mappedEntities;
-        }
-
-        public virtual async Task<TEntity> MapUpdateDtoToEntityAsync(TEntity entity, TUpdateDto updateDto)
-        {
-            return await Task.Run(() =>
-            {
-                updateDto.CopyPropertiesTo(entity);
-                return entity;
-            });
-        }
-
-        public virtual async Task<TEntity> MapDtoToEntityAsync(TEntitySingleDto createDto)
-        {
-            return await Task.Run(() =>
-            {
-                var entity = Activator.CreateInstance<TEntity>();
-                createDto.CopyPropertiesFrom(entity);
-                return entity;
-            });
-        }
-
-        public virtual async Task<TEntitySingleDto> MapEntityToDtoAsync(TEntity entity)
-        {
-            return await Task.Run(() =>
-            {
-                var mappedDto = Activator.CreateInstance<TEntitySingleDto>();
-                mappedDto.CopyPropertiesFrom(entity);
-                return mappedDto;
-            });
-        }
-
-        public virtual async Task<List<TEntityListDto>> MapEntitiesToDtosAsync(List<TEntity> entities)
-        {
-            var mappedDtos = new List<TEntityListDto>();
-
-            await Task.Run(() =>
-            {
-                entities.ForEach(entity =>
-                {
-                    var mappedDto = Activator.CreateInstance<TEntityListDto>();
-                    entity.CopyPropertiesTo(mappedDto);
-                    mappedDtos.Add(mappedDto);
-                });
-            });
-
-            return mappedDtos;
-        }
-
-        public virtual async Task<TCreateDto> MapEntityToCreateDtoAsync(TEntity entity)
-        {
-            return await Task.Run(() =>
-            {
-                var mappedDto = Activator.CreateInstance<TCreateDto>();
-                mappedDto.CopyPropertiesFrom(entity);
-                return mappedDto;
-            });
-        }
-
-        public virtual async Task<List<TCreateDto>> MapEntitiesToCreateDtosAsync(List<TEntity> entities)
-        {
-            var mappedDtos = new List<TCreateDto>();
-
-            await Task.Run(() =>
-            {
-                entities.ForEach(entity =>
-                {
-                    var mappedDto = Activator.CreateInstance<TCreateDto>();
-                    entity.CopyPropertiesFrom(mappedDto);
-                    mappedDtos.Add(mappedDto);
-                });
-            });
-
-            return mappedDtos;
-        }
-
-        public virtual async Task<TUpdateDto> MapEntityToUpdateDtoAsync(TEntity entity)
-        {
-            return await Task.Run(() =>
-            {
-                var mappedDto = Activator.CreateInstance<TUpdateDto>();
-                entity.CopyPropertiesTo(mappedDto);
-                return mappedDto;
-            });
-        }
-
-        public virtual async Task<List<TUpdateDto>> MapEntitiesToUpdateDtosAsync(List<TEntity> entities)
-        {
-            var mappedDtos = new List<TUpdateDto>();
-
-            await Task.Run(() =>
-            {
-                entities.ForEach(entity =>
-                {
-                    var mappedDto = Activator.CreateInstance<TUpdateDto>();
-                    entity.CopyPropertiesFrom(mappedDto);
-                    mappedDtos.Add(mappedDto);
-                });
-            });
-
-            return mappedDtos;
-        }
-
-        protected async Task<TEntitySingleDto> MapToGetOutputDtoAsync(TEntity entity)
-        {
-            return await Task.Run(() =>
-            {
-                var mappedDto = Activator.CreateInstance<TEntitySingleDto>();
-                entity.CopyPropertiesTo(mappedDto);
-                return mappedDto;
-            });
-        }
 
 
     }

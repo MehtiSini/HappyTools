@@ -1,5 +1,6 @@
 ﻿using HappyTools.Domain.Entities.Audit.Abstractions;
 using HappyTools.Shared;
+using System.Linq.Expressions;
 
 namespace HappyTools.Repository
 {
@@ -8,7 +9,7 @@ namespace HappyTools.Repository
     {
         Task<TKey> InsertAsync(TEntity entity);
         Task<TKey> UpdateAsync(TEntity entity);
-        Task<TKey> DeleteAsync(TKey id);
+        Task DeleteAsync(Expression<Func<TEntity, bool>> predicate);
         Task<IReadOnlyList<TKey>> GetListAsync();
     }
 
@@ -18,7 +19,7 @@ namespace HappyTools.Repository
     {
         Task<TEntity> InsertAsync(TEntity entity);
         Task<TEntity> UpdateAsync(TEntity entity);
-        Task<TKey> DeleteAsync(TKey id);
+        Task DeleteAsync(Expression<Func<TEntity, bool>> predicate);
         Task<IReadOnlyList<TKey>> GetListAsync();
         Task<IReadOnlyList<TKey>> GetFilteredListAsync(TFilterModel filterModel);
     }

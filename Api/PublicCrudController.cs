@@ -66,5 +66,19 @@ namespace HappyTools.Api
         }
 
 
+        [HttpDelete]
+        [Route("public/[controller]/{id}/hard")]
+        public async virtual Task<TReturnDto> HardDeleteAsync(TKey id)
+        {
+            return await _appService.HardDeleteAsync(id);
+        }
+
+        [HttpDelete]
+        [Route("public/[controller]/{id}/soft")]
+        public async virtual Task<TReturnDto> SoftDeleteAsync(TKey id)
+        {
+            return await _appService.SoftDeleteAsync(id);
+        }
+
     }
 }

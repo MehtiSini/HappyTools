@@ -1,4 +1,5 @@
 ﻿// BaseDbContext.cs
+using HappyTools.CrossCutting.Data;
 using HappyTools.Domain.Entities.SoftDelete;
 using HappyTools.EfCore.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +9,15 @@ namespace HappyTools.EfCore.Context
 {
     public class BaseDbContext : DbContext
     {
-        protected virtual bool IsSoftDeleteFilterEnabled => true;
+        private readonly IDataFilter<ISoftDelete> _softDeleteFilter;
 
-        public BaseDbContext(DbContextOptions options) : base(options) { }
+        public BaseDbContext(
+            DbContextOptions options,
+            IDataFilter<ISoftDelete> softDeleteFilter)
+            : base(options)
+        {
+            _softDeleteFilter = softDeleteFilter;
+        }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -21,9 +28,7 @@ namespace HappyTools.EfCore.Context
         protected virtual void ApplyBaseConfiguration(ModelBuilder builder)
         {
             builder.ApplyIEntityPrimaryKeys();
-
-            if (IsSoftDeleteFilterEnabled)
-                ApplySoftDeleteFilters(builder);
+            ApplySoftDeleteFilters(builder);
         }
 
         protected virtual void ApplySoftDeleteFilters(ModelBuilder builder)
@@ -31,12 +36,28 @@ namespace HappyTools.EfCore.Context
             foreach (var entityType in builder.Model.GetEntityTypes())
             {
                 var clr = entityType.ClrType;
-                if (!typeof(ISoftDelete).IsAssignableFrom(clr)) continue;
+                if (!typeof(ISoftDelete).IsAssignableFrom(clr))
+                    continue;
 
-                var e = Expression.Parameter(clr, "e");
-                var isDeletedProp = Expression.Property(e, nameof(ISoftDelete.IsDeleted));
-                var body = Expression.Equal(isDeletedProp, Expression.Constant(false));
-                var lambda = Expression.Lambda(body, e);
+                var parameter = Expression.Parameter(clr, "e");
+
+                var isDeletedProp =
+                    Expression.Property(parameter, nameof(ISoftDelete.IsDeleted));
+
+                var filterEnabled =
+                    Expression.Property(
+                        Expression.Constant(_softDeleteFilter),
+                        nameof(IDataFilter<ISoftDelete>.IsEnabled));
+
+                var notDeleted =
+                    Expression.Equal(isDeletedProp, Expression.Constant(false));
+
+                var body =
+                    Expression.OrElse(
+                        Expression.Not(filterEnabled),
+                        notDeleted);
+
+                var lambda = Expression.Lambda(body, parameter);
 
                 builder.Entity(clr).HasQueryFilter(lambda);
             }
