@@ -1,8 +1,10 @@
 ﻿using HappyTools.CrossCutting.Data;
 using HappyTools.Domain.Entities.MultiTenant;
 using HappyTools.Domain.Entities.SoftDelete;
+using HappyTools.EfCore.Extensions;
 using HappyTools.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq.Expressions;
 
@@ -10,11 +12,11 @@ namespace HappyTools.EfCore.Context
 {
     public class MultiTenantDbContext : BaseDbContext
     {
-        private readonly ICurrentTenant _currentTenant;
 
-        public MultiTenantDbContext(DbContextOptions options, IDataFilter<ISoftDelete> softDeleteFilter) : base(options, softDeleteFilter)
+        public MultiTenantDbContext(IServiceProvider provider) : base(provider)
         {
         }
+        protected ICurrentTenant CurrentTenant => _provider.GetRequiredService<ICurrentTenant>();
 
         protected virtual bool IsMultiTenantFilterEnabled => true;
 
@@ -36,7 +38,7 @@ namespace HappyTools.EfCore.Context
 
                 var e = Expression.Parameter(clr, "e");
                 var tenantProp = Expression.Property(e, nameof(IMultiTenant.TenantId));
-                var tenantValue = Expression.Constant(_currentTenant.Id, typeof(Guid?));
+                var tenantValue = Expression.Constant(CurrentTenant.Id, typeof(Guid?));
 
                 var body = Expression.Equal(tenantProp, tenantValue);
                 var lambda = Expression.Lambda(body, e);

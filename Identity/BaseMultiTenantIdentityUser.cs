@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace HappyTools.Identity
 {
-    public class BaseMultiTenantIdentityUser<TKey> : IdentityUser<Guid>, ISoftDeletedMultiTenantEntity<Guid>
+    public class BaseMultiTenantIdentityUser<TKey> : IdentityUser<Guid>, IMultiTenantSoftDeletedAuditedEntity<Guid>
     {
         public bool IsDeleted { get; set; }
 

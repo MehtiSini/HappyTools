@@ -3,21 +3,21 @@ using HappyTools.CrossCutting.Data;
 using HappyTools.Domain.Entities.SoftDelete;
 using HappyTools.EfCore.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Linq.Expressions;
 
 namespace HappyTools.EfCore.Context
 {
     public class BaseDbContext : DbContext
     {
-        private readonly IDataFilter<ISoftDelete> _softDeleteFilter;
+        protected IServiceProvider _provider;
 
-        public BaseDbContext(
-            DbContextOptions options,
-            IDataFilter<ISoftDelete> softDeleteFilter)
-            : base(options)
+        public BaseDbContext(IServiceProvider provider)
         {
-            _softDeleteFilter = softDeleteFilter;
+            _provider = provider;
         }
+
+        protected IDataFilter<ISoftDelete> SoftDelete => _provider.GetRequiredService<IDataFilter<ISoftDelete>>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -46,7 +46,7 @@ namespace HappyTools.EfCore.Context
 
                 var filterEnabled =
                     Expression.Property(
-                        Expression.Constant(_softDeleteFilter),
+                        Expression.Constant(SoftDelete),
                         nameof(IDataFilter<ISoftDelete>.IsEnabled));
 
                 var notDeleted =
