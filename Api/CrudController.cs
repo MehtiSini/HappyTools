@@ -21,11 +21,11 @@ namespace HappyTools.Api
          where TPageAndSortRequestDto : PageAndSortRequestDto
          where TReturnDto : CrudResponseDto<TKey>
     {
-        private readonly TAppService _appService;
+        public readonly TAppService AppService;
 
         public CrudController(TAppService appService)
         {
-            _appService = appService;
+            AppService = appService;
         }
 
         [HttpPost]
@@ -34,7 +34,7 @@ namespace HappyTools.Api
         public async virtual Task<TReturnDto> Create([FromBody] TCreateDto objectDto)
         {
 
-            var res = await _appService.CreateAsync(objectDto);
+            var res = await AppService.CreateAsync(objectDto);
             return res;
         }
 
@@ -44,7 +44,7 @@ namespace HappyTools.Api
         [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
         public async virtual Task<TReturnDto> Update(TKey id, [FromBody] TUpdateDto objDto)
         {
-            var res = await _appService.UpdateAsync(id, objDto);
+            var res = await AppService.UpdateAsync(id, objDto);
             return res;
         }
 
@@ -54,7 +54,7 @@ namespace HappyTools.Api
         [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
         public async virtual Task<TEntitySingleDto> GetAsync(TKey id)
         {
-            var res = await _appService.GetAsync(id);
+            var res = await AppService.GetAsync(id);
             return res;
 
         }
@@ -65,10 +65,52 @@ namespace HappyTools.Api
         public async virtual Task<PagedResultDto<TEntityListDto>> GetFilteredList([FromQuery] TPageAndSortRequestDto input, [FromBody] TFilterModel filterModel)
         {
 
-            var filteredPagedResult = await _appService.GetFilteredPagedListAsync(input, filterModel);
+            var filteredPagedResult = await AppService.GetFilteredPagedListAsync(input, filterModel);
             return filteredPagedResult;
         }
 
 
+
+    }
+
+    [ApiController]
+    [Route("api/app")]
+    public abstract class CrudReadOnlyController<TAppService, TEntityListDto, TEntitySingleDto, TKey, TPageAndSortRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto> : ControllerBase
+    where TAppService : ICrudService<TEntityListDto, TEntitySingleDto, TKey, TPageAndSortRequestDto, TFilterModel, TCreateDto, TUpdateDto, TReturnDto>
+    where TEntityListDto : EntityDto<TKey>, new()
+    where TEntitySingleDto : EntityDto<TKey>, new()
+    where TFilterModel : BaseFilterModel
+    where TPageAndSortRequestDto : PageAndSortRequestDto
+    where TReturnDto : CrudResponseDto<TKey>
+    {
+        public readonly TAppService AppService;
+
+        public CrudReadOnlyController(TAppService appService)
+        {
+            AppService = appService;
+        }
+
+
+        [HttpGet]
+        [Route("admin/[controller]/{id}")]
+        [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
+        public async virtual Task<TEntitySingleDto> GetAsync(TKey id)
+        {
+            var res = await AppService.GetAsync(id);
+            return res;
+
+        }
+
+        [HttpPost]
+        [Route("admin/[controller]/filter")]
+        [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
+        public async virtual Task<PagedResultDto<TEntityListDto>> GetFilteredList([FromQuery] TPageAndSortRequestDto input, [FromBody] TFilterModel filterModel)
+        {
+
+            var filteredPagedResult = await AppService.GetFilteredPagedListAsync(input, filterModel);
+            return filteredPagedResult;
+        }
+
     }
 }
+
