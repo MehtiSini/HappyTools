@@ -12,7 +12,8 @@ namespace HappyTools.EfCore.Context
     {
         protected IServiceProvider _provider;
 
-        public BaseDbContext(IServiceProvider provider)
+        public BaseDbContext(DbContextOptions options, IServiceProvider provider)
+       : base(options)
         {
             _provider = provider;
         }

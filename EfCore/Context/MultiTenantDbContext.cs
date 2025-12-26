@@ -12,10 +12,10 @@ namespace HappyTools.EfCore.Context
 {
     public class MultiTenantDbContext : BaseDbContext
     {
-
-        public MultiTenantDbContext(IServiceProvider provider) : base(provider)
+        public MultiTenantDbContext(DbContextOptions options, IServiceProvider provider) : base(options, provider)
         {
         }
+
         protected ICurrentTenant CurrentTenant => _provider.GetRequiredService<ICurrentTenant>();
 
         protected virtual bool IsMultiTenantFilterEnabled => true;
