@@ -6,13 +6,15 @@ namespace HappyTools.CrossCutting.Event
     {
         public static IServiceCollection AddLocalEventBus(this IServiceCollection services)
         {
+            // Event bus itself
             services.AddScoped<ILocalEventBus, LocalEventBus>();
 
+            // Scan & register all handlers
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
             foreach (var assembly in assemblies)
             {
-                var handlers = assembly.GetTypes()
+                var handlerTypes = assembly.GetTypes()
                     .Where(t =>
                         !t.IsAbstract &&
                         !t.IsInterface &&
@@ -20,16 +22,16 @@ namespace HappyTools.CrossCutting.Event
                             i.IsGenericType &&
                             i.GetGenericTypeDefinition() == typeof(ILocalEventHandler<>)));
 
-                foreach (var handler in handlers)
+                foreach (var handlerType in handlerTypes)
                 {
-                    var interfaces = handler.GetInterfaces()
+                    var interfaces = handlerType.GetInterfaces()
                         .Where(i =>
                             i.IsGenericType &&
                             i.GetGenericTypeDefinition() == typeof(ILocalEventHandler<>));
 
                     foreach (var @interface in interfaces)
                     {
-                        services.AddScoped(@interface, handler);
+                        services.AddScoped(@interface, handlerType);
                     }
                 }
             }
@@ -37,4 +39,5 @@ namespace HappyTools.CrossCutting.Event
             return services;
         }
     }
+
 }

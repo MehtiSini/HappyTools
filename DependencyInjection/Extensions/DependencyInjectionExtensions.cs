@@ -19,7 +19,6 @@ namespace HappyTools.DependencyInjection.Extensions
                 .ToList();
 
 
-
             foreach (var type in types)
             {
                 var serviceInterfaces = type.GetInterfaces()

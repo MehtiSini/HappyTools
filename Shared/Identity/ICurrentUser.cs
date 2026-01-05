@@ -31,12 +31,11 @@ namespace HappyTools.Shared.Identity
 
         string[] Roles { get; }
 
-        Claim? FindClaim(string claimType);
+        void SetClaims(ClaimsPrincipal principal);
 
-        Claim[] FindClaims(string claimType);
-
-        Claim[] GetAllClaims();
-
-        bool IsInRole(string roleName);
+        public Claim? FindClaim(string claimType);
+        public Claim[] FindClaims(string claimType);
+        public Claim[] GetAllClaims();
+        public bool IsInRole(string roleName);
     }
 }

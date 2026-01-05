@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -22,39 +23,34 @@ namespace HappyTools.CrossCutting.Event
         void Subscribe<TEvent>(ILocalEventHandler<TEvent> handler) where TEvent : ILocalEvent;
     }
 
-    // Simple in-memory implementation
     public class LocalEventBus : ILocalEventBus
     {
-        private readonly ConcurrentDictionary<Type, List<object>> _handlers = new();
+        private readonly IServiceProvider _serviceProvider;
 
-        public void Subscribe<TEvent>(ILocalEventHandler<TEvent> handler) where TEvent : ILocalEvent
+        public LocalEventBus(IServiceProvider serviceProvider)
         {
-            var type = typeof(TEvent);
-            var handlers = _handlers.GetOrAdd(type, _ => new List<object>());
-            lock (handlers)
-            {
-                handlers.Add(handler);
-            }
+            _serviceProvider = serviceProvider;
         }
 
-        public async Task PublishAsync<TEvent>(TEvent @event) where TEvent : ILocalEvent
+        public async Task PublishAsync<TEvent>(TEvent eventData)
+            where TEvent : ILocalEvent
         {
-            var type = typeof(TEvent);
-            if (_handlers.TryGetValue(type, out var handlers))
-            {
-                List<Task> tasks = new();
-                lock (handlers)
-                {
-                    foreach (var handler in handlers)
-                    {
-                        if (handler is ILocalEventHandler<TEvent> h)
-                        {
-                            tasks.Add(h.HandleAsync(@event));
-                        }
-                    }
-                }
-                await Task.WhenAll(tasks);
-            }
+            using var scope = _serviceProvider.CreateScope();
+
+            var handlers = scope.ServiceProvider
+                .GetServices<ILocalEventHandler<TEvent>>();
+
+            var tasks = handlers.Select(h => h.HandleAsync(eventData));
+
+            await Task.WhenAll(tasks);
+        }
+
+        // Not needed anymore
+        public void Subscribe<TEvent>(ILocalEventHandler<TEvent> handler)
+            where TEvent : ILocalEvent
+        {
+            throw new NotSupportedException("Use DI-based handlers");
         }
     }
+
 }

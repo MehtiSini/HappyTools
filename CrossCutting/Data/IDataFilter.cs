@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace HappyTools.CrossCutting.Data
 {
-    // IDataFilter
     public interface IDataFilter<TFilter>
     {
         bool IsEnabled { get; }
         IDisposable Disable();
-        IDisposable Enable();
     }
+
 
 }

@@ -83,11 +83,11 @@ namespace HappyTools.CrossCutting.Wrapper.AutoWrapper
             string exceptionMessage = default;
             object apiError;
             int httpStatusCode;
-            if (exception is ValidationException)
+            if (exception is ValidationException validationException)
             {
-                apiError = new ApiException(exception.Message);
+                apiError = new ApiError(validationException.Message);
+                httpStatusCode = StatusCodes.Status400BadRequest;
 
-                httpStatusCode = 400;
             }
             else if (exception is ApiException)
             {

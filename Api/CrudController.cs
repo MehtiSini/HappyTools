@@ -30,7 +30,7 @@ namespace HappyTools.Api
 
         [HttpPost]
         [Route("admin/[controller]")]
-        [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
         public async virtual Task<TReturnDto> Create([FromBody] TCreateDto objectDto)
         {
 
@@ -41,7 +41,7 @@ namespace HappyTools.Api
 
         [HttpPut]
         [Route("admin/[controller]/{id}")]
-        [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
         public async virtual Task<TReturnDto> Update(TKey id, [FromBody] TUpdateDto objDto)
         {
             var res = await AppService.UpdateAsync(id, objDto);
@@ -51,7 +51,7 @@ namespace HappyTools.Api
 
         [HttpGet]
         [Route("admin/[controller]/{id}")]
-        [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
         public async virtual Task<TEntitySingleDto> GetAsync(TKey id)
         {
             var res = await AppService.GetAsync(id);
@@ -61,7 +61,7 @@ namespace HappyTools.Api
 
         [HttpPost]
         [Route("admin/[controller]/filter")]
-        [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
         public async virtual Task<PagedResultDto<TEntityListDto>> GetFilteredList([FromQuery] TPageAndSortRequestDto input, [FromBody] TFilterModel filterModel)
         {
 
@@ -93,7 +93,7 @@ namespace HappyTools.Api
 
         [HttpGet]
         [Route("admin/[controller]/{id}")]
-        [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
         public async virtual Task<TEntitySingleDto> GetAsync(TKey id)
         {
             var res = await AppService.GetAsync(id);
@@ -103,7 +103,7 @@ namespace HappyTools.Api
 
         [HttpPost]
         [Route("admin/[controller]/filter")]
-        [Authorize(Roles = "RegulatorAdmin,SuperAdmin,Admin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
         public async virtual Task<PagedResultDto<TEntityListDto>> GetFilteredList([FromQuery] TPageAndSortRequestDto input, [FromBody] TFilterModel filterModel)
         {
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HappyTools.DependencyInjection.Contracts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,8 +7,7 @@ using System.Threading.Tasks;
 
 namespace HappyTools.CrossCutting.Data
 {
-    // DataFilter implementation
-    public sealed class DataFilter<TFilter> : IDataFilter<TFilter>
+    public class DataFilter<TFilter> : IDataFilter<TFilter>
     {
         private static readonly AsyncLocal<int> _disableCount = new();
 
@@ -16,28 +16,14 @@ namespace HappyTools.CrossCutting.Data
         public IDisposable Disable()
         {
             _disableCount.Value++;
-            return new Revert(() => _disableCount.Value--);
+            return new ReEnableScope();
         }
 
-        public IDisposable Enable()
+        private sealed class ReEnableScope : IDisposable
         {
-            if (_disableCount.Value > 0)
-                _disableCount.Value--;
-            return new Revert(() => _disableCount.Value++);
-        }
-
-        private sealed class Revert : IDisposable
-        {
-            private readonly Action _onDispose;
-            private bool _disposed;
-
-            public Revert(Action onDispose) => _onDispose = onDispose;
-
             public void Dispose()
             {
-                if (_disposed) return;
-                _disposed = true;
-                _onDispose();
+                _disableCount.Value--;
             }
         }
     }

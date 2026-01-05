@@ -30,7 +30,7 @@ namespace HappyTools.Shared.Identity
 
             Claims = principal.Claims.ToArray();
 
-            Id = Claims.FirstOrDefault(c => c.Type == "sub")?.Value is { } idStr && Guid.TryParse(idStr, out var id) ? id : null;
+            Id = Claims.FirstOrDefault(c => c.Type == "id")?.Value is { } idStr && Guid.TryParse(idStr, out var id) ? id : null;
             UserName = Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
             Name = Claims.FirstOrDefault(c => c.Type == "given_name")?.Value;
             SurName = Claims.FirstOrDefault(c => c.Type == "family_name")?.Value;
@@ -38,7 +38,7 @@ namespace HappyTools.Shared.Identity
             PhoneNumberVerified = Claims.FirstOrDefault(c => c.Type == "phone_number_verified")?.Value == "true";
             Email = Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
             EmailVerified = Claims.FirstOrDefault(c => c.Type == "email_verified")?.Value == "true";
-            TenantId = Claims.FirstOrDefault(c => c.Type == "tenantid")?.Value is { } tenantStr && Guid.TryParse(tenantStr, out var tenantId) ? tenantId : null;
+            TenantId = Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value is { } tenantStr && Guid.TryParse(tenantStr, out var tenantId) ? tenantId : null;
             Roles = Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToArray();
         }
         

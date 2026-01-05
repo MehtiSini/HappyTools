@@ -29,7 +29,7 @@ namespace HappyTools.Identity
         
     }
 
-    public class BaseTenantIdentityRole : IdentityRole<Guid>, ISoftDeletedAuditedConcurrentEntity<Guid>
+    public class BaseIdentityRole : IdentityRole<Guid>, ISoftDeletedAuditedConcurrentEntity<Guid>
     {
         public bool IsDeleted { get; set; }
 

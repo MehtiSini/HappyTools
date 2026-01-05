@@ -9,6 +9,7 @@ using HappyTools.DependencyInjection.Contracts;
 using HappyTools.Domain.Entities.Audit.Abstractions;
 using HappyTools.Domain.Entities.Concurrency;
 using HappyTools.Domain.Entities.SoftDelete;
+using HappyTools.EfCore.Uow;
 using HappyTools.Shared;
 using HappyTools.Shared.Identity;
 using HappyTools.Shared.MultiTenancy;
@@ -29,8 +30,8 @@ namespace HappyTools.Application
        where TReturnDto : CrudResponseDto<TKey>, new()
     {
         private readonly IServiceProvider _provider;
-
-        protected TDbContext DbContext => _provider.GetRequiredService<TDbContext>();
+        protected IUnitOfWorkManager UnitOfWorkManager => _provider.GetRequiredService<IUnitOfWorkManager>();
+        protected TDbContext DbContext => UnitOfWorkManager.Current.GetDbContext<TDbContext>();
         protected DbSet<TEntity> DbSet => DbContext.Set<TEntity>();
         protected IDataFilter<ISoftDelete> DataFilter => _provider.GetRequiredService<IDataFilter<ISoftDelete>>();
         protected ICurrentTenant CurrentTenant => _provider.GetRequiredService<ICurrentTenant>();
@@ -49,7 +50,6 @@ namespace HappyTools.Application
 
             await DbContext.Set<TEntity>()
                 .AddAsync(entity);
-            await DbContext.SaveChangesAsync();
 
             var result = new TReturnDto
             {
@@ -73,9 +73,7 @@ namespace HappyTools.Application
 
             mappedEntity.ConcurrencyStamp = entity.ConcurrencyStamp;
 
-            DbContext.Set<TEntity>()
-                .Update(mappedEntity);
-            await DbContext.SaveChangesAsync();
+            DbSet.Update(mappedEntity);
 
             return new TReturnDto
             {
@@ -237,21 +235,21 @@ namespace HappyTools.Application
                 .ToListAsync();
         }
 
-        public async Task InsertAsync(TEntity entity, bool autoSave = true)
+        public async Task InsertAsync(TEntity entity, bool autoSave = false)
         {
             DbSet.Add(entity);
             if (autoSave)
                 await SaveChangesAsync();
         }
 
-        public async Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = true)
+        public async Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = false)
         {
             DbSet.AddRange(entities);
             if (autoSave)
                 await SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(TEntity entity, bool autoSave = true)
+        public async Task UpdateAsync(TEntity entity, bool autoSave = false)
         {
             DbSet.Update(entity);
 
@@ -259,7 +257,7 @@ namespace HappyTools.Application
                 await SaveChangesAsync();
 
         }
-        public async Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = true)
+        public async Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = false)
         {
             DbSet.UpdateRange(entities);
             if (autoSave)
@@ -267,7 +265,7 @@ namespace HappyTools.Application
 
         }
 
-        public async Task DeleteAsync(Expression<Func<TEntity, bool>> predicate, bool autoSave = true)
+        public async Task DeleteAsync(Expression<Func<TEntity, bool>> predicate, bool autoSave = false)
         {
             var entities = await DbContext.Set<TEntity>()
       .Where(predicate)

@@ -50,6 +50,7 @@
 
 	<ItemGroup>
 	  <Folder Include="Contract\Interfaces\" />
+	  <Folder Include="Utilities\Exceptions\" />
 	</ItemGroup>
 
 </Project>

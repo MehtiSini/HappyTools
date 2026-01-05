@@ -1,5 +1,6 @@
 ﻿using HappyTools.CrossCutting.Data;
 using HappyTools.EfCore.Interceptors;
+using HappyTools.EfCore.Uow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,12 +20,13 @@ namespace HappyTools.EfCore.Extensions
             if (string.IsNullOrEmpty(connectionString))
                 throw new Exception("ConnectionString is mandatory!");
 
-            // Register DataFilter
             services.AddScoped(typeof(IDataFilter<>), typeof(DataFilter<>));
 
             // Register EF Core interceptor(s)
             services.AddScoped<SoftDeleteInterceptor>();
             services.AddScoped<IInterceptor>(sp => sp.GetRequiredService<SoftDeleteInterceptor>());
+
+            services.AddScoped<IUnitOfWorkManager, UnitOfWorkManager>();
 
             services.AddDbContext<TContext>((provider, options) =>
             {

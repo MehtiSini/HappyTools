@@ -1,32 +1,28 @@
-﻿using HappyTools.CrossCutting.Data;
-using HappyTools.Domain.Entities.MultiTenant;
-using HappyTools.Domain.Entities.SoftDelete;
+﻿using HappyTools.Domain.Entities.MultiTenant;
 using HappyTools.EfCore.Extensions;
 using HappyTools.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Linq.Expressions;
 
 namespace HappyTools.EfCore.Context
 {
-    public class MultiTenantDbContext : BaseDbContext
+    public class MultiTenantDbContext<TContext> : BaseDbContext<TContext>
+        where TContext : BaseDbContext<TContext>
     {
-        public MultiTenantDbContext(DbContextOptions options, IServiceProvider provider) : base(options, provider)
+        public MultiTenantDbContext(DbContextOptions<TContext> options, IServiceProvider provider)
+            : base(options, provider)
         {
         }
 
         protected ICurrentTenant CurrentTenant => _provider.GetRequiredService<ICurrentTenant>();
 
-        protected virtual bool IsMultiTenantFilterEnabled => true;
-
-      
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void ApplyBaseConfiguration(ModelBuilder builder)
         {
-            base.OnModelCreating(builder);
+            base.ApplyBaseConfiguration(builder);
 
-            if (IsMultiTenantFilterEnabled)
-                ApplyMultiTenantFilters(builder);
+            ApplyMultiTenantFilters(builder);
+            ApplySoftDeleteFilters(builder);
         }
 
         protected virtual void ApplyMultiTenantFilters(ModelBuilder builder)
@@ -34,17 +30,28 @@ namespace HappyTools.EfCore.Context
             foreach (var entityType in builder.Model.GetEntityTypes())
             {
                 var clr = entityType.ClrType;
-                if (!typeof(IMultiTenant).IsAssignableFrom(clr)) continue;
 
-                var e = Expression.Parameter(clr, "e");
-                var tenantProp = Expression.Property(e, nameof(IMultiTenant.TenantId));
-                var tenantValue = Expression.Constant(CurrentTenant.Id, typeof(Guid?));
+                if (!typeof(IMultiTenant).IsAssignableFrom(clr))
+                    continue;
 
-                var body = Expression.Equal(tenantProp, tenantValue);
-                var lambda = Expression.Lambda(body, e);
+                var parameter = Expression.Parameter(clr, "e");
+                var tenantIdProp = Expression.Property(parameter, nameof(IMultiTenant.TenantId));
+
+                // Lazy access to CurrentTenant
+                var currentTenantExpr = Expression.Property(
+                    Expression.Constant(this),
+                    nameof(CurrentTenant));
+
+                var tenantIdExpr = Expression.Property(currentTenantExpr, nameof(ICurrentTenant.Id));
+
+                // Filter: e.TenantId == CurrentTenant.Id
+                var filterBody = Expression.Equal(tenantIdProp, tenantIdExpr);
+
+                var lambda = Expression.Lambda(filterBody, parameter);
 
                 builder.Entity(clr).HasQueryFilter(lambda);
             }
         }
+
     }
 }
