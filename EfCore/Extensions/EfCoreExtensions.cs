@@ -22,15 +22,14 @@ namespace HappyTools.EfCore.Extensions
 
             services.AddScoped(typeof(IDataFilter<>), typeof(DataFilter<>));
 
-            // Register EF Core interceptor(s)
-            services.AddScoped<SoftDeleteInterceptor>();
-            services.AddScoped<IInterceptor>(sp => sp.GetRequiredService<SoftDeleteInterceptor>());
-
             services.AddScoped<IUnitOfWorkManager, UnitOfWorkManager>();
+
+            services.AddScoped<SaveChangesInterceptor, MultiTenantInterceptor>();
+
+            services.AddScoped<MultiTenantInterceptor>();
 
             services.AddDbContext<TContext>((provider, options) =>
             {
-                // Database provider
                 switch (providerName)
                 {
                     case DbProvider.SqlServer:
@@ -43,10 +42,8 @@ namespace HappyTools.EfCore.Extensions
                         throw new InvalidOperationException($"Unsupported provider: {providerName}");
                 }
 
-                // Add all registered interceptors
-                var interceptors = provider.GetServices<IInterceptor>().ToArray();
-                if (interceptors.Any())
-                    options.AddInterceptors(interceptors);
+                options.AddInterceptors(provider.GetRequiredService<MultiTenantInterceptor>());
+
             });
 
             return services;

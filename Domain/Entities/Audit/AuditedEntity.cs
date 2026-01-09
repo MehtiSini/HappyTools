@@ -8,7 +8,7 @@ using MassTransit;
 
 namespace HappyTools.Domain.Entities.Audit
 {
-    public class AuditedEntity<TKey> : CreationAuditedEntity<TKey>,  IHasConcurrencyStamp
+    public class AuditedEntity<TKey> : CreationAuditedEntity<TKey>, IHasConcurrencyStamp
     {
         public AuditedEntity()
         {

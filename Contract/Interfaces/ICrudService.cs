@@ -12,8 +12,9 @@ namespace HappyTools.Contract.Interfaces
          where TReturnDto : CrudResponseDto<TKey>
 
     {
-        Task<TReturnDto> CreateAsync(TCreateDto create);
-        Task<TReturnDto> UpdateAsync(TKey id, TUpdateDto create);
+        Task<TReturnDto> CreateAsync(TCreateDto input);
+        Task CreateBulkAsync(List<TCreateDto> inputs);
+        Task<TReturnDto> UpdateAsync(TKey id, TUpdateDto input);
         Task<List<TEntityListDto>> GetFilteredListAsync(TFilterModel filterModel);
         Task<TReturnDto> SoftDeleteAsync(TKey id);
         Task<TReturnDto> HardDeleteAsync(TKey id);

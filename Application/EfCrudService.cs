@@ -81,6 +81,14 @@ namespace HappyTools.Application
             };
         }
 
+        public async Task CreateBulkAsync(List<TCreateDto> inputs)
+        {
+            var entities = MapCreateDtosToEntities(inputs);
+
+            if (entities.Any())
+                await DbSet.AddRangeAsync(entities);
+        }
+
 
         // Soft delete
         public virtual async Task<TReturnDto> SoftDeleteAsync(TKey id)
@@ -95,7 +103,6 @@ namespace HappyTools.Application
                 throw new ValidationException($"No entity {typeof(TEntity).Name} with Id ==> {id}");
 
             DbContext.Set<TEntity>().Remove(entity);
-            await DbContext.SaveChangesAsync();
 
             return new TReturnDto { Id = entity.Id };
         }
@@ -115,7 +122,6 @@ namespace HappyTools.Application
             using (DataFilter.Disable())
             {
                 DbContext.Set<TEntity>().Remove(entity);
-                await DbContext.SaveChangesAsync();
             }
 
             return new TReturnDto { Id = entity.Id };
@@ -230,9 +236,9 @@ namespace HappyTools.Application
 
         public virtual async Task<List<TEntity>> GetEntitiesAsync()
         {
-           return await DbSet.
-                AsNoTracking()
-                .ToListAsync();
+            return await DbSet.
+                 AsNoTracking()
+                 .ToListAsync();
         }
 
         public async Task InsertAsync(TEntity entity, bool autoSave = false)
@@ -275,7 +281,11 @@ namespace HappyTools.Application
                 throw new KeyNotFoundException();
 
             DbSet.RemoveRange(entities);
-            await SaveChangesAsync();
+
+            if(autoSave)
+            {
+                await SaveChangesAsync();
+            }
         }
         public Task SaveChangesAsync()
         {
@@ -429,7 +439,6 @@ namespace HappyTools.Application
             entity.CopyPropertiesFrom(mappedDto);
             return mappedDto;
         }
-
 
 
     }
