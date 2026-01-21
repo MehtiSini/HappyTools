@@ -5,6 +5,7 @@ namespace HappyTools.CrossCutting.Wrapper.Extensions
 {
     internal static class StringExtension
     {
+
         public static bool IsValidJson(this string text)
         {
             text = text.Trim();

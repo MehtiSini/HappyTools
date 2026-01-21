@@ -33,7 +33,7 @@ namespace HappyTools.Application
         protected IUnitOfWorkManager UnitOfWorkManager => _provider.GetRequiredService<IUnitOfWorkManager>();
         protected TDbContext DbContext => UnitOfWorkManager.Current.GetDbContext<TDbContext>();
         protected DbSet<TEntity> DbSet => DbContext.Set<TEntity>();
-        protected IDataFilter<ISoftDelete> DataFilter => _provider.GetRequiredService<IDataFilter<ISoftDelete>>();
+        protected IDataFilter<ISoftDelete> SoftDeleteDataFilter => _provider.GetRequiredService<IDataFilter<ISoftDelete>>();
         protected ICurrentTenant CurrentTenant => _provider.GetRequiredService<ICurrentTenant>();
         protected ICurrentUser CurrentUser => _provider.GetRequiredService<ICurrentUser>();
         protected ILocalEventBus LocalEventBus => _provider.GetRequiredService<ILocalEventBus>();
@@ -97,7 +97,7 @@ namespace HappyTools.Application
                 throw new ArgumentNullException(nameof(id));
 
             var entity = await DbContext.Set<TEntity>()
-                .FirstOrDefaultAsync(e => e.Id!.Equals(id));
+                .FirstOrDefaultAsync(e => e.Id.Equals(id));
 
             if (entity == null)
                 throw new ValidationException($"No entity {typeof(TEntity).Name} with Id ==> {id}");
@@ -106,25 +106,23 @@ namespace HappyTools.Application
 
             return new TReturnDto { Id = entity.Id };
         }
-        // Hard delete
+
         public virtual async Task<TReturnDto> HardDeleteAsync(TKey id)
         {
-            if (id is null)
-                throw new ArgumentNullException(nameof(id));
-
-            var entity = await DbContext.Set<TEntity>()
-                .FirstOrDefaultAsync(e => e.Id!.Equals(id));
-
-            if (entity == null)
-                throw new ValidationException($"No entity {typeof(TEntity).Name} with Id ==> {id}");
-
-            // Disable SoftDeleteInterceptor temporarily
-            using (DataFilter.Disable())
+            using (SoftDeleteDataFilter.Disable())
             {
-                DbContext.Set<TEntity>().Remove(entity);
-            }
+                if (id is null)
+                    throw new ArgumentNullException(nameof(id));
 
-            return new TReturnDto { Id = entity.Id };
+                var entity = await DbSet.FindAsync(id);
+                if (entity == null)
+                    throw new KeyNotFoundException($"Entity with id {id} not found.");
+
+                DbSet.Remove(entity);
+                await DbContext.SaveChangesAsync();
+
+                return new TReturnDto { Id = id };
+            }
         }
 
 
@@ -151,11 +149,11 @@ namespace HappyTools.Application
 
             var totalCount = await query.LongCountAsync();
 
-            var entities = await DbContext.Set<TEntity>()
+            var entities = await DbSet
                  .AsNoTracking()
                  .ToListAsync();
 
-            var results = MapEntitiesToDtos(entities);
+            var results = await ProjectToListDto(query).ToListAsync();
 
             return new PagedResultDto<TEntityListDto>(
         allCount: entities.Count,
@@ -282,7 +280,7 @@ namespace HappyTools.Application
 
             DbSet.RemoveRange(entities);
 
-            if(autoSave)
+            if (autoSave)
             {
                 await SaveChangesAsync();
             }
@@ -436,7 +434,7 @@ namespace HappyTools.Application
         protected virtual TEntitySingleDto MapToGetOutputDto(TEntity entity)
         {
             var mappedDto = Activator.CreateInstance<TEntitySingleDto>();
-            entity.CopyPropertiesFrom(mappedDto);
+            mappedDto.CopyPropertiesTo(entity);
             return mappedDto;
         }
 

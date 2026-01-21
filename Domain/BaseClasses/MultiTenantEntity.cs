@@ -4,9 +4,8 @@ using HappyTools.Domain.Entities.SoftDelete;
 
 namespace HappyTools.Domain.BaseClasses
 {
-    public class MultiTenantSoftDeletedEntity<TKey> : AuditedEntity<TKey>, ISoftDelete, IMultiTenant
+    public class MultiTenantEntity<TKey> : AuditedEntity<TKey>, IMultiTenant
     {
-        public bool IsDeleted { get; set; }
         public Guid? TenantId { get; set; }
     }
 }

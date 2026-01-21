@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HappyTools.EfCore.Uow
 {
-    public class UnitOfWorkManager : IUnitOfWorkManager 
+    public class UnitOfWorkManager : IUnitOfWorkManager  , IScopedDependency
     {
         private static readonly AsyncLocal<IUnitOfWork> _current = new();
 

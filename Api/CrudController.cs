@@ -31,7 +31,7 @@ namespace HappyTools.Api
         [HttpPost]
         [Route("admin/[controller]")]
         [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
-        public async virtual Task<TReturnDto> Create([FromBody] TCreateDto objectDto)
+        public async virtual Task<TReturnDto> CreateAsync([FromBody] TCreateDto objectDto)
         {
 
             var res = await AppService.CreateAsync(objectDto);
@@ -42,7 +42,7 @@ namespace HappyTools.Api
         [HttpPut]
         [Route("admin/[controller]/{id}")]
         [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
-        public async virtual Task<TReturnDto> Update(TKey id, [FromBody] TUpdateDto objDto)
+        public async virtual Task<TReturnDto> UpdateAsync(TKey id, [FromBody] TUpdateDto objDto)
         {
             var res = await AppService.UpdateAsync(id, objDto);
             return res;

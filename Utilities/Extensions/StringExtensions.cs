@@ -13,6 +13,19 @@ namespace HappyTools.Utilities.Extensions
 {
     public static class StringExtensions
     {
+
+        public static string NormalizePersianString(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return input;
+
+            return input
+                .Replace('ي', 'ی') // Arabic Yeh → Persian Yeh
+                .Replace('ك', 'ک') // Arabic Kaf → Persian Kaf
+                .Replace("‌", " ") // remove Zero-width non-joiner
+                .Trim();
+        }
+
         /// <summary>
         /// Returns the input string with the first character converted to uppercase
         /// </summary>

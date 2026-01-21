@@ -20,5 +20,6 @@ namespace HappyTools.Contract.Interfaces
         Task<TReturnDto> HardDeleteAsync(TKey id);
         Task<PagedResultDto<TEntityListDto>> GetFilteredPagedListAsync(TPageAndSortRequestDto input, TFilterModel filterModel);
         Task<TEntitySingleDto> GetAsync(TKey id);
+   
     }
 }

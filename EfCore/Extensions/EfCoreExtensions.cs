@@ -24,9 +24,9 @@ namespace HappyTools.EfCore.Extensions
 
             services.AddScoped<IUnitOfWorkManager, UnitOfWorkManager>();
 
-            services.AddScoped<SaveChangesInterceptor, MultiTenantInterceptor>();
-
             services.AddScoped<MultiTenantInterceptor>();
+            services.AddScoped<SoftDeleteInterceptor>();
+            services.AddScoped<AuditingInterceptor>();
 
             services.AddDbContext<TContext>((provider, options) =>
             {
@@ -43,6 +43,8 @@ namespace HappyTools.EfCore.Extensions
                 }
 
                 options.AddInterceptors(provider.GetRequiredService<MultiTenantInterceptor>());
+                options.AddInterceptors(provider.GetRequiredService<SoftDeleteInterceptor>());
+                options.AddInterceptors(provider.GetRequiredService<AuditingInterceptor>());
 
             });
 
