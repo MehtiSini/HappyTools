@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using HappyTools.DependencyInjection.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace HappyTools.CrossCutting.Event
         void Subscribe<TEvent>(ILocalEventHandler<TEvent> handler) where TEvent : ILocalEvent;
     }
 
-    public class LocalEventBus : ILocalEventBus
+    public class LocalEventBus : ILocalEventBus , IScopedDependency
     {
         private readonly IServiceProvider _serviceProvider;
 

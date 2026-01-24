@@ -153,6 +153,9 @@ namespace HappyTools.Application
                  .AsNoTracking()
                  .ToListAsync();
 
+            if (!entities.Any())
+                return new PagedResultDto<TEntityListDto>(0, 0, null);
+
             var results = await ProjectToListDto(query).ToListAsync();
 
             return new PagedResultDto<TEntityListDto>(
