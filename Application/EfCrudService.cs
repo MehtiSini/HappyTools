@@ -147,6 +147,8 @@ namespace HappyTools.Application
 
             query = query.OrderByDescending(e => e.CreationTime);
 
+            query = ApplyPagedQuery(query, input);
+
             var totalCount = await query.LongCountAsync();
 
             var entities = await DbSet

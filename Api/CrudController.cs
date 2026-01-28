@@ -59,6 +59,17 @@ namespace HappyTools.Api
 
         }
 
+        [HttpDelete]
+        [Route("admin/[controller]/{id}")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
+        public async virtual Task<TReturnDto> HardDeleteAsync(TKey id)
+        {
+            var res = await AppService.HardDeleteAsync(id);
+            return res;
+
+        }
+
+
         [HttpPost]
         [Route("admin/[controller]/filter")]
         [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
