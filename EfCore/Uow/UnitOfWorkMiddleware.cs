@@ -18,8 +18,6 @@ namespace HappyTools.EfCore.Uow
         {
             var _uowManager = context.RequestServices.GetRequiredService<IUnitOfWorkManager>();
 
-            var c = context.RequestServices.GetRequiredService<ICurrentTenant>();
-
             using var uow = _uowManager.Begin();
             await _next(context);
             await uow.CompleteAsync();

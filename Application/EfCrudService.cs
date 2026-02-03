@@ -73,7 +73,7 @@ namespace HappyTools.Application
 
             mappedEntity.ConcurrencyStamp = entity.ConcurrencyStamp;
 
-            DbSet.Update(mappedEntity);
+            //DbSet.Update(mappedEntity);
 
             return new TReturnDto
             {
@@ -151,17 +151,16 @@ namespace HappyTools.Application
 
             var totalCount = await query.LongCountAsync();
 
-            var entities = await DbSet
-                 .AsNoTracking()
-                 .ToListAsync();
+            var allCount = await DbSet
+                 .LongCountAsync();
 
-            if (!entities.Any())
+            if (allCount <= 0)
                 return new PagedResultDto<TEntityListDto>(0, 0, null);
 
             var results = await ProjectToListDto(query).ToListAsync();
 
             return new PagedResultDto<TEntityListDto>(
-        allCount: entities.Count,
+        allCount: allCount,
         totalCount: totalCount,
         items: results
     );
