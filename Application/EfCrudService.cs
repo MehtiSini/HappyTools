@@ -8,6 +8,7 @@ using HappyTools.CrossCutting.Event;
 using HappyTools.DependencyInjection.Contracts;
 using HappyTools.Domain.Entities.Audit.Abstractions;
 using HappyTools.Domain.Entities.Concurrency;
+using HappyTools.Domain.Entities.MultiTenant;
 using HappyTools.Domain.Entities.SoftDelete;
 using HappyTools.EfCore.Uow;
 using HappyTools.Shared;
@@ -34,6 +35,7 @@ namespace HappyTools.Application
         protected TDbContext DbContext => UnitOfWorkManager.Current.GetDbContext<TDbContext>();
         protected DbSet<TEntity> DbSet => DbContext.Set<TEntity>();
         protected IDataFilter<ISoftDelete> SoftDeleteDataFilter => _provider.GetRequiredService<IDataFilter<ISoftDelete>>();
+        protected IDataFilter<IMultiTenant> MultiTenantFilter => _provider.GetRequiredService<IDataFilter<IMultiTenant>>();
         protected ICurrentTenant CurrentTenant => _provider.GetRequiredService<ICurrentTenant>();
         protected ICurrentUser CurrentUser => _provider.GetRequiredService<ICurrentUser>();
         protected ILocalEventBus LocalEventBus => _provider.GetRequiredService<ILocalEventBus>();

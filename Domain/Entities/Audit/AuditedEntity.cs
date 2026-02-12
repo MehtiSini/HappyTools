@@ -14,7 +14,7 @@ namespace HappyTools.Domain.Entities.Audit
         {
             if (typeof(TKey) == typeof(Guid))
             {
-                Id = (TKey)(object)NewId.Next().ToGuid();
+                //Id = (TKey)(object)NewId.Next().ToGuid();
             }
 
             ConcurrencyStamp = Guid.NewGuid().ToString("N");
