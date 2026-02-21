@@ -9,6 +9,7 @@ namespace HappyTools.FileManager
 {
     public interface IFileManagerService
     {
+        Task<string> SaveStreamAsync(Stream stream, string folderPath, string fileName);
         Task<string> SaveFileAsync(IFormFile file, string folderPath, string? fileName = null);
 
         Task<IEnumerable<string>> SaveFilesAsync(IEnumerable<IFormFile> files, string folderPath);

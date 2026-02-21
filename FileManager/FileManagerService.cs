@@ -130,6 +130,26 @@ namespace HappyTools.FileManager
             };
         }
 
+        public async Task<string> SaveStreamAsync(Stream stream, string folderPath, string fileName)
+        {
+            if (stream == null || stream.Length == 0)
+                throw new ArgumentException("Stream is empty");
+
+            if (string.IsNullOrWhiteSpace(fileName))
+                throw new ArgumentException("File name is required");
+
+            var fullFolder = Path.Combine(_env.WebRootPath, folderPath);
+            Directory.CreateDirectory(fullFolder);
+
+            var fullPath = Path.Combine(fullFolder, fileName);
+
+            stream.Position = 0;
+
+            using var fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await stream.CopyToAsync(fileStream);
+
+            return Path.Combine(folderPath, fileName).Replace("\\", "/");
+        }
     }
 
 }
