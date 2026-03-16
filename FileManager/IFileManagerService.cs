@@ -9,6 +9,8 @@ namespace HappyTools.FileManager
 {
     public interface IFileManagerService
     {
+        Task<DownloadFileResultDto> DowonloadFileAsync(string logoUrl);
+
         Task<string> SaveStreamAsync(Stream stream, string folderPath, string fileName);
         Task<string> SaveFileAsync(IFormFile file, string folderPath, string? fileName = null);
 
@@ -26,6 +28,12 @@ namespace HappyTools.FileManager
 
         bool FileExists(string relativePath);
 
-         string GetContentType(string filePath);
+        string GetContentType(string filePath);
+    }
+    public class DownloadFileResultDto
+    {
+        public string FileName { get; set; } = default!;
+        public string ContentType { get; set; } = default!;
+        public byte[] FileBytes { get; set; } = Array.Empty<byte>();
     }
 }

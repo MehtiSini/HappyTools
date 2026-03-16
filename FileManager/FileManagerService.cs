@@ -150,6 +150,25 @@ namespace HappyTools.FileManager
 
             return Path.Combine(folderPath, fileName).Replace("\\", "/");
         }
+
+        public async Task<DownloadFileResultDto> DowonloadFileAsync(string logoUrl)
+        {
+            if (string.IsNullOrWhiteSpace(logoUrl))
+                return null;
+
+            if (!FileExists(logoUrl))
+                return null;
+
+            var absoulutePath = GetAbsolutePath(logoUrl);
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(absoulutePath);
+
+            return new DownloadFileResultDto
+            {
+                FileName = Path.GetFileName(absoulutePath),
+                ContentType = GetContentType(absoulutePath),
+                FileBytes = fileBytes
+            };
+        }
     }
 
 }
