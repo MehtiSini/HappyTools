@@ -247,7 +247,7 @@ namespace HappyTools.Application
 
         public async Task InsertAsync(TEntity entity, bool autoSave = false)
         {
-            DbSet.Add(entity);
+            await DbSet.AddAsync(entity);
             if (autoSave)
                 await SaveChangesAsync();
         }
