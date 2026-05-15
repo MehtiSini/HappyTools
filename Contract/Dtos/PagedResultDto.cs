@@ -39,4 +39,42 @@ namespace HappyTools.Contract.Dtos
             Items = items;
         }
     }
+
+    public class PagedFullResultDto<T>
+    {
+        public int PageNumber { get; set; }
+
+        public int PageSize { get; set; }
+
+        public long TotalCount { get; set; }
+
+        public int TotalPages { get; set; }
+
+        public bool HasNextPage { get; set; }
+
+        public bool HasPreviousPage { get; set; }
+
+        public IReadOnlyList<T> Items { get; set; } = new List<T>();
+
+        public PagedFullResultDto()
+        {
+
+        }
+
+        public PagedFullResultDto( long totalCount, int pageNumber, int pageSize, IReadOnlyList<T> items)
+        {
+            TotalCount = totalCount;
+            PageNumber = pageNumber;
+            PageSize = pageSize;
+
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            HasPreviousPage = pageNumber > 1;
+
+            HasNextPage = pageNumber < TotalPages;
+
+            Items = items;
+        }
+    }
+
 }
