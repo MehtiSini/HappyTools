@@ -3,8 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HappyTools.Notification
 {
-    [Flags]
-    public enum NotificationSendingType
+    public enum NotificationChannel
     {
         [Display(Name = "None")]
         None = 0,

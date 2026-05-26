@@ -87,7 +87,11 @@ namespace HappyTools.CrossCutting.Wrapper.AutoWrapper
             {
                 apiError = new ApiError(validationException.Message);
                 httpStatusCode = StatusCodes.Status400BadRequest;
-
+            }
+            else if (exception is FluentValidation.ValidationException fluentEx)
+            {
+                apiError = new ApiError(fluentEx.Message);
+                httpStatusCode = StatusCodes.Status400BadRequest;
             }
             else if (exception is ApiException)
             {

@@ -1,5 +1,4 @@
 ﻿using HappyTools.DependencyInjection.Contracts;
-using HappyTools.Notification.KaveNegar;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,17 +9,9 @@ namespace HappyTools.Notification
 {
     public class NotificationSenderAppService : INotificationSenderAppService, ITransientDependency
     {
-        // might be handled better
-        private readonly IKaveNegarSmsService _kaveNegarSmsService;
-
-        public NotificationSenderAppService(IKaveNegarSmsService kaveNegarSmsService)
+        public Task SendNotifications(List<NotificationSendDto> notification)
         {
-            _kaveNegarSmsService = kaveNegarSmsService;
-        }
-
-        public async Task SendNotifications(List<NotificationSendDto> notifications)
-        {
-           await _kaveNegarSmsService.SendBulkSms(notifications);
+            throw new NotImplementedException();
         }
     }
 }
